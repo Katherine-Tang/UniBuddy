@@ -6,10 +6,10 @@ type Texts = Record<string, string>;
 
 const zh: Texts = {
   // Splash
-  splash_location: "XJTLU · Suzhou",
-  splash_subtitle: "Your best XJTLU campus guide",
-  splash_cta: "开始探索/Start Exploring →",
-  splash_f1: "图片/Photos", splash_f2: "地图/Map", splash_f3: "路线/Routes", splash_f4: "集章/Badges",
+  splash_location: "西浦·苏州 / XJTLU · Suzhou",
+  splash_subtitle: "你的 XJTLU 校园向导 / Your best XJTLU campus guide",
+  splash_cta: "开始探索 / Start Exploring →",
+  splash_f1: "图片 / Photos", splash_f2: "地图 / Map", splash_f3: "路线 / Routes", splash_f4: "集章 / Badges",
   // BottomNav
   nav_home: "主页", nav_map: "地图", nav_camera: "相机", nav_route: "路线", nav_profile: "我的",
   // HomeScreen
@@ -297,10 +297,10 @@ const zh: Texts = {
 };
 
 const en: Texts = {
-  splash_location: "XJTLU · Suzhou",
-  splash_subtitle: "Your best XJTLU campus guide",
-  splash_cta: "Start Exploring →",
-  splash_f1: "Photos", splash_f2: "Map", splash_f3: "Routes", splash_f4: "Badges",
+  splash_location: "西浦·苏州 / XJTLU · Suzhou",
+  splash_subtitle: "你的 XJTLU 校园向导 / Your best XJTLU campus guide",
+  splash_cta: "开始探索 / Start Exploring →",
+  splash_f1: "图片 / Photos", splash_f2: "地图 / Map", splash_f3: "路线 / Routes", splash_f4: "集章 / Badges",
   nav_home: "Home", nav_map: "Map", nav_camera: "Camera", nav_route: "Route", nav_profile: "Me",
   home_welcome: "Hello! Let's explore campus today",
   home_spots: "Spots", home_routes: "Routes", home_stamps: "Badges",
