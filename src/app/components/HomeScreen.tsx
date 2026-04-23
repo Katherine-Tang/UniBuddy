@@ -36,6 +36,7 @@ type UserSchoolComment = {
 };
 
 export function HomeScreen() {
+  const LANG_GUIDE_SEEN_KEY = "unibuddy_home_lang_guide_seen_v1";
   const navigate = useNavigate();
   const { favorites, removeFavorite } = useFavorites();
   const { badgeCheckedCount, unlockedBadgeIds } = useCamera();
@@ -57,6 +58,7 @@ export function HomeScreen() {
   const [showSearch, setShowSearch] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<typeof classrooms[0] | null>(null);
+  const [showLangGuide, setShowLangGuide] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getLocale = (room: typeof classrooms[0]) => room[lang];
@@ -75,8 +77,26 @@ export function HomeScreen() {
     }
   }, [showSearch, selectedRoom]);
 
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem(LANG_GUIDE_SEEN_KEY);
+      if (!seen) setShowLangGuide(true);
+    } catch {
+      // ignore storage errors
+      setShowLangGuide(true);
+    }
+  }, []);
+
   const openSearch = () => { setShowSearch(true); setQuery(""); setSelectedRoom(null); };
   const closeSearch = () => { setShowSearch(false); setQuery(""); setSelectedRoom(null); };
+  const closeLangGuide = () => {
+    setShowLangGuide(false);
+    try {
+      localStorage.setItem(LANG_GUIDE_SEEN_KEY, "1");
+    } catch {
+      // ignore storage errors
+    }
+  };
 
   const USER_COMMENTS_KEY = "unibuddy_school_comments_v1";
   const [activePerspective, setActivePerspective] = useState<SchoolPerspective>("freshman");
@@ -585,6 +605,37 @@ export function HomeScreen() {
       </div>
 
       <BottomNav activeTab="Home" />
+
+      {showLangGuide && (
+        <div style={{ position: "absolute", inset: 0, zIndex: 55, backgroundColor: "rgba(14, 27, 77, 0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "74px 16px 16px" }}>
+          <div style={{ width: "100%", maxWidth: "360px", backgroundColor: C.white, border: `2.5px solid ${C.navy}`, borderRadius: "16px", boxShadow: `5px 5px 0 ${C.navy}`, padding: "14px" }}>
+            <p style={{ fontSize: "14px", fontWeight: 900, color: C.navy, marginBottom: "6px" }}>
+              🌐 {t("home_lang_guide_title")}
+            </p>
+            <p style={{ fontSize: "12px", fontWeight: 700, color: "#4B6898", lineHeight: 1.6, marginBottom: "12px" }}>
+              {t("home_lang_guide_text")}
+            </p>
+            <button
+              type="button"
+              onClick={closeLangGuide}
+              style={{
+                width: "100%",
+                height: "36px",
+                borderRadius: "12px",
+                cursor: "pointer",
+                backgroundColor: C.royal,
+                border: `2px solid ${C.navy}`,
+                boxShadow: `2px 2px 0 ${C.navy}`,
+                color: C.white,
+                fontSize: "12px",
+                fontWeight: 900,
+              }}
+            >
+              {t("home_lang_guide_ok")}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Search Overlay ── */}
       {showSearch && (
