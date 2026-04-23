@@ -8,7 +8,6 @@ export type UniAIBuddyChatMessage = {
 
 type KnowledgeEntry = {
   id: number;
-  lang: Lang;
   question: string;
   answer: string;
   combined: string;
@@ -28,8 +27,6 @@ const SYSTEM_QUESTION_HINTS = [
   "校园", "收藏", "个人中心", "profile", "pictures", "route", "mystery", "custom", "locate",
   "location", "map", "navigation", "classroom", "favorite", "favourite", "feature", "function",
 ];
-
-const MIN_HIT_SCORE = 4;
 
 function isIdentityQuestion(question: string): boolean {
   const q = question.toLowerCase();
@@ -110,16 +107,13 @@ function parseKnowledgeEntries(markdown: string): KnowledgeEntry[] {
   let currentId = 0;
   let currentQuestion = "";
   let answerBuffer: string[] = [];
-  let currentLang: Lang = "zh";
-  let activeFaqLang: Lang | null = null;
 
   const pushCurrent = () => {
-    if (!currentQuestion || !activeFaqLang) return;
+    if (!currentQuestion) return;
     const answer = answerBuffer.join(" ").replace(/\s+/g, " ").trim();
     if (!answer) return;
     entries.push({
       id: currentId,
-      lang: currentLang,
       question: currentQuestion.trim(),
       answer,
       combined: `${currentQuestion} ${answer}`.toLowerCase(),
@@ -128,33 +122,17 @@ function parseKnowledgeEntries(markdown: string): KnowledgeEntry[] {
   };
 
   for (const line of lines) {
-    if (line.startsWith("## ")) {
-      pushCurrent();
-      currentQuestion = "";
-      answerBuffer = [];
-      const lowerHeading = line.toLowerCase();
-      if (line.includes("预测高频问题")) {
-        activeFaqLang = "zh";
-      } else if (lowerHeading.includes("predicted frequently asked questions")) {
-        activeFaqLang = "en";
-      } else {
-        activeFaqLang = null;
-      }
-      continue;
-    }
-
-    if (!activeFaqLang) continue;
-
     const matched = line.match(/^###\s*(\d+)\)\s*(.+)$/);
     if (matched) {
       pushCurrent();
       currentId = Number(matched[1]);
       currentQuestion = matched[2]?.trim() ?? "";
-      currentLang = activeFaqLang;
       answerBuffer = [];
       continue;
     }
     if (currentQuestion) {
+      // Allow parsing multiple FAQ sections (e.g., zh + en) in one markdown file.
+      if (line.startsWith("## ")) continue;
       if (line.trim()) answerBuffer.push(line.trim());
     }
   }
@@ -164,7 +142,7 @@ function parseKnowledgeEntries(markdown: string): KnowledgeEntry[] {
 
 const KNOWLEDGE_ENTRIES = parseKnowledgeEntries(knowledgeMarkdownRaw);
 
-function scoreEntry(query: string, entry: KnowledgeEntry, lang: Lang): number {
+function scoreEntry(query: string, entry: KnowledgeEntry): number {
   const normalizedQuery = normalizeForMatch(query);
   if (normalizedQuery && entry.normalizedQuestion) {
     if (
@@ -172,24 +150,23 @@ function scoreEntry(query: string, entry: KnowledgeEntry, lang: Lang): number {
       entry.normalizedQuestion.includes(normalizedQuery) ||
       normalizedQuery.includes(entry.normalizedQuestion)
     ) {
-      return 1000 + (entry.lang === lang ? 40 : 0);
+      return 999;
     }
   }
 
   const queryTokens = tokenize(query);
   if (queryTokens.length === 0) return 0;
-  let score = entry.lang === lang ? 3 : 0;
+  let score = 0;
   for (const token of queryTokens) {
     if (entry.question.toLowerCase().includes(token)) score += 4;
     else if (entry.combined.includes(token)) score += 2;
   }
-  if (query.length >= 4 && entry.combined.includes(query.toLowerCase())) score += 8;
   return score;
 }
 
-function searchKnowledge(query: string, lang: Lang, limit = 3): KnowledgeEntry[] {
+function searchKnowledge(query: string, limit = 3): KnowledgeEntry[] {
   return KNOWLEDGE_ENTRIES
-    .map((entry) => ({ entry, score: scoreEntry(query, entry, lang) }))
+    .map((entry) => ({ entry, score: scoreEntry(query, entry) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
@@ -208,7 +185,7 @@ async function askDeepSeek(
   }
 
   const contextText = contextEntries
-    .map((entry, idx) => `[${idx + 1}] Q: ${entry.question}\nA: ${entry.answer}`)
+    .map((entry) => `Q: ${entry.question}\nA: ${entry.answer}`)
     .join("\n\n");
 
   const systemPrompt =
@@ -235,10 +212,7 @@ async function askDeepSeek(
         ...compactHistory,
         {
           role: "user",
-          content:
-            lang === "zh"
-              ? `用户问题：${question}\n\n可用知识如下（仅可依据这些知识回答）：\n${contextText}`
-              : `User question: ${question}\n\nAvailable knowledge (answer only from these facts):\n${contextText}`,
+          content: `用户问题：${question}\n\n可用知识如下：\n${contextText}`,
         },
       ],
     }),
@@ -275,18 +249,16 @@ export async function askUniAIBuddy(
     .join(" ");
 
   const retrievalQuery = [lastUserTurns, q].filter(Boolean).join(" ");
-  const hits = searchKnowledge(retrievalQuery, lang, 4);
-  const bestHit = hits[0];
-  const bestScore = bestHit ? scoreEntry(retrievalQuery, bestHit, lang) : 0;
+  if (!looksLikeSystemQuestion(retrievalQuery)) return nonSystemReply(lang);
+  const hits = searchKnowledge(retrievalQuery, 3);
 
-  if (!bestHit || bestScore < MIN_HIT_SCORE) {
-    if (!looksLikeSystemQuestion(retrievalQuery)) return nonSystemReply(lang);
+  if (hits.length === 0) {
     return lang === "zh" ? UNI_AI_FALLBACK_ZH : UNI_AI_FALLBACK_EN;
   }
 
   try {
-    return await askDeepSeek(q, hits.slice(0, 3), lang, history);
+    return await askDeepSeek(q, hits, lang, history);
   } catch {
-    return bestHit.answer;
+    return hits[0]?.answer ?? (lang === "zh" ? UNI_AI_FALLBACK_ZH : UNI_AI_FALLBACK_EN);
   }
 }
