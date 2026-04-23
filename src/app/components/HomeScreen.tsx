@@ -36,7 +36,6 @@ type UserSchoolComment = {
 };
 
 export function HomeScreen() {
-  const LANG_GUIDE_SEEN_KEY = "unibuddy_home_lang_guide_seen_v1";
   const navigate = useNavigate();
   const { favorites, removeFavorite } = useFavorites();
   const { badgeCheckedCount, unlockedBadgeIds } = useCamera();
@@ -58,7 +57,7 @@ export function HomeScreen() {
   const [showSearch, setShowSearch] = useState(false);
   const [query, setQuery] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<typeof classrooms[0] | null>(null);
-  const [showLangGuide, setShowLangGuide] = useState(false);
+  const [showLangGuide, setShowLangGuide] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const getLocale = (room: typeof classrooms[0]) => room[lang];
@@ -77,26 +76,9 @@ export function HomeScreen() {
     }
   }, [showSearch, selectedRoom]);
 
-  useEffect(() => {
-    try {
-      const seen = localStorage.getItem(LANG_GUIDE_SEEN_KEY);
-      if (!seen) setShowLangGuide(true);
-    } catch {
-      // ignore storage errors
-      setShowLangGuide(true);
-    }
-  }, []);
-
   const openSearch = () => { setShowSearch(true); setQuery(""); setSelectedRoom(null); };
   const closeSearch = () => { setShowSearch(false); setQuery(""); setSelectedRoom(null); };
-  const closeLangGuide = () => {
-    setShowLangGuide(false);
-    try {
-      localStorage.setItem(LANG_GUIDE_SEEN_KEY, "1");
-    } catch {
-      // ignore storage errors
-    }
-  };
+  const closeLangGuide = () => setShowLangGuide(false);
 
   const USER_COMMENTS_KEY = "unibuddy_school_comments_v1";
   const [activePerspective, setActivePerspective] = useState<SchoolPerspective>("freshman");
