@@ -589,13 +589,18 @@ export function HomeScreen() {
       <BottomNav activeTab="Home" />
 
       {showLangGuide && (
-        <div style={{ position: "absolute", inset: 0, zIndex: 55, backgroundColor: "rgba(14, 27, 77, 0.4)", display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "74px 16px 16px" }}>
-          <div style={{ width: "100%", maxWidth: "360px", backgroundColor: C.white, border: `2.5px solid ${C.navy}`, borderRadius: "16px", boxShadow: `5px 5px 0 ${C.navy}`, padding: "14px" }}>
+        <div style={{ position: "absolute", inset: 0, zIndex: 55, backgroundColor: "rgba(14, 27, 77, 0.4)", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: "74px 12px 16px" }}>
+          <div style={{ position: "absolute", top: "44px", right: "48px", fontSize: "30px", lineHeight: 1, color: C.yellow, textShadow: `1px 1px 0 ${C.navy}` }}>
+            ↑
+          </div>
+          <div style={{ width: "100%", maxWidth: "328px", backgroundColor: C.white, border: `2.5px solid ${C.navy}`, borderRadius: "16px", boxShadow: `5px 5px 0 ${C.navy}`, padding: "14px", position: "relative" }}>
+            <div style={{ position: "absolute", top: "-10px", right: "54px", width: 0, height: 0, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderBottom: `10px solid ${C.white}` }} />
             <p style={{ fontSize: "14px", fontWeight: 900, color: C.navy, marginBottom: "6px" }}>
-              🌐 {t("home_lang_guide_title")}
+              🌐 语言切换 / Language Switch
             </p>
             <p style={{ fontSize: "12px", fontWeight: 700, color: "#4B6898", lineHeight: 1.6, marginBottom: "12px" }}>
-              {t("home_lang_guide_text")}
+              右上角「中文 / EN」可随时切换页面语言。<br />
+              Use the top-right "中文 / EN" toggle to switch language anytime.
             </p>
             <button
               type="button"
@@ -613,7 +618,7 @@ export function HomeScreen() {
                 fontWeight: 900,
               }}
             >
-              {t("home_lang_guide_ok")}
+              我知道了 / Got it
             </button>
           </div>
         </div>
