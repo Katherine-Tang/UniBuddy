@@ -27,6 +27,21 @@ const navCardDefs = [
   { id: "custom",   labelKey: "home_nav_custom",    emoji: "🧩", path: "/custom-route", bg: C.cream,     tagBg: C.sky,   tag: "DIY"   },
 ];
 
+const AI_PRESET_QUESTIONS: Record<"zh" | "en", string[]> = {
+  zh: [
+    "我从哪里进入地图功能？",
+    "系统支持哪些路线模式？",
+    "导览路线在地图上怎么显示？",
+    "定位失败常见原因是什么？",
+  ],
+  en: [
+    "Where can I enter the map feature?",
+    "What route modes are supported?",
+    "How is the guided route shown on the map?",
+    "What are common reasons for location failure?",
+  ],
+};
+
 type UserSchoolComment = {
   id: string;
   perspective: SchoolPerspective;
@@ -91,8 +106,8 @@ export function HomeScreen() {
   const [showAiBuddy, setShowAiBuddy] = useState(false);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleAskUniAIBuddy = async () => {
-    const q = aiQuestion.trim();
+  const submitAiQuestion = async (rawQuestion: string) => {
+    const q = rawQuestion.trim();
     if (!q || aiLoading) return;
     const historyBeforeTurn = aiMessages;
     const nextHistory: UniAIBuddyChatMessage[] = [...historyBeforeTurn, { role: "user", content: q }];
@@ -105,6 +120,10 @@ export function HomeScreen() {
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const handleAskUniAIBuddy = async () => {
+    await submitAiQuestion(aiQuestion);
   };
 
   useEffect(() => {
@@ -860,6 +879,30 @@ export function HomeScreen() {
                   </p>
                 </div>
               )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                {AI_PRESET_QUESTIONS[lang].map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    disabled={aiLoading}
+                    onClick={() => { void submitAiQuestion(preset); }}
+                    style={{
+                      maxWidth: "100%",
+                      padding: "6px 10px",
+                      borderRadius: "999px",
+                      border: `1.5px solid ${C.pale}`,
+                      backgroundColor: aiLoading ? "#EEF2FA" : C.white,
+                      color: aiLoading ? "#94A3B8" : C.navy,
+                      fontSize: "11px",
+                      fontWeight: 800,
+                      lineHeight: 1.3,
+                      cursor: aiLoading ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </div>
               {aiMessages.map((msg, idx) => (
                 <div
                   key={`${msg.role}-${idx}`}
