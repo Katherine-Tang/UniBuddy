@@ -27,21 +27,6 @@ const navCardDefs = [
   { id: "custom",   labelKey: "home_nav_custom",    emoji: "🧩", path: "/custom-route", bg: C.cream,     tagBg: C.sky,   tag: "DIY"   },
 ];
 
-const AI_PRESET_QUESTIONS: Record<"zh" | "en", string[]> = {
-  zh: [
-    "我从哪里进入地图功能？",
-    "系统支持哪些路线模式？",
-    "导览路线在地图上怎么显示？",
-    "定位失败常见原因是什么？",
-  ],
-  en: [
-    "Where can I enter the map feature?",
-    "What route modes are supported?",
-    "How is the guided route shown on the map?",
-    "What are common reasons for location failure?",
-  ],
-};
-
 type UserSchoolComment = {
   id: string;
   perspective: SchoolPerspective;
@@ -106,24 +91,19 @@ export function HomeScreen() {
   const [showAiBuddy, setShowAiBuddy] = useState(false);
   const aiInputRef = useRef<HTMLTextAreaElement>(null);
 
-  const submitAiQuestion = async (rawQuestion: string) => {
-    const q = rawQuestion.trim();
+  const handleAskUniAIBuddy = async () => {
+    const q = aiQuestion.trim();
     if (!q || aiLoading) return;
-    const historyBeforeTurn = aiMessages;
-    const nextHistory: UniAIBuddyChatMessage[] = [...historyBeforeTurn, { role: "user", content: q }];
+    const nextHistory: UniAIBuddyChatMessage[] = [...aiMessages, { role: "user", content: q }];
     setAiMessages(nextHistory);
     setAiQuestion("");
     setAiLoading(true);
     try {
-      const answer = await askUniAIBuddy(q, lang, historyBeforeTurn);
+      const answer = await askUniAIBuddy(q, lang, nextHistory);
       setAiMessages((prev) => [...prev, { role: "assistant", content: answer }]);
     } finally {
       setAiLoading(false);
     }
-  };
-
-  const handleAskUniAIBuddy = async () => {
-    await submitAiQuestion(aiQuestion);
   };
 
   useEffect(() => {
@@ -610,6 +590,9 @@ export function HomeScreen() {
 
       {showLangGuide && (
         <div style={{ position: "absolute", inset: 0, zIndex: 55, backgroundColor: "rgba(14, 27, 77, 0.4)", display: "flex", alignItems: "flex-start", justifyContent: "flex-end", padding: "74px 12px 16px" }}>
+          <div style={{ position: "absolute", top: "44px", right: "48px", fontSize: "30px", lineHeight: 1, color: C.yellow, textShadow: `1px 1px 0 ${C.navy}` }}>
+            ↑
+          </div>
           <div style={{ width: "100%", maxWidth: "328px", backgroundColor: C.white, border: `2.5px solid ${C.navy}`, borderRadius: "16px", boxShadow: `5px 5px 0 ${C.navy}`, padding: "14px", position: "relative" }}>
             <div style={{ position: "absolute", top: "-10px", right: "54px", width: 0, height: 0, borderLeft: "10px solid transparent", borderRight: "10px solid transparent", borderBottom: `10px solid ${C.white}` }} />
             <p style={{ fontSize: "14px", fontWeight: 900, color: C.navy, marginBottom: "6px" }}>
@@ -879,30 +862,6 @@ export function HomeScreen() {
                   </p>
                 </div>
               )}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {AI_PRESET_QUESTIONS[lang].map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    disabled={aiLoading}
-                    onClick={() => { void submitAiQuestion(preset); }}
-                    style={{
-                      maxWidth: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "999px",
-                      border: `1.5px solid ${C.pale}`,
-                      backgroundColor: aiLoading ? "#EEF2FA" : C.white,
-                      color: aiLoading ? "#94A3B8" : C.navy,
-                      fontSize: "11px",
-                      fontWeight: 800,
-                      lineHeight: 1.3,
-                      cursor: aiLoading ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </div>
               {aiMessages.map((msg, idx) => (
                 <div
                   key={`${msg.role}-${idx}`}
